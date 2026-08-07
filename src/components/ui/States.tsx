@@ -1,5 +1,13 @@
 import type { ReactNode } from 'react'
 import { Button } from './Button'
+import { BrandMark } from '@/components/brand/BrandMark'
+
+export type EmptyIllustration = 'cash-flow' | 'goals'
+
+const ILLUSTRATION_SRC: Record<EmptyIllustration, string> = {
+  'cash-flow': '/illustrations/empty-cash-flow.webp',
+  goals: '/illustrations/empty-goals.webp',
+}
 
 export function LoadingSkeleton({ rows = 3 }: { rows?: number }) {
   return (
@@ -15,14 +23,27 @@ export function EmptyState({
   title,
   description,
   action,
+  illustration,
 }: {
   title: string
   description: string
   action?: ReactNode
+  /** Optional decorative art for sparse empty states. */
+  illustration?: EmptyIllustration
 }) {
   return (
     <div className="card flex flex-col items-start gap-3 p-6 text-left">
-      <h3 className="text-base font-semibold">{title}</h3>
+      {illustration ? (
+        <img
+          src={ILLUSTRATION_SRC[illustration]}
+          alt=""
+          width={160}
+          height={160}
+          className="h-28 w-28 object-contain sm:h-32 sm:w-32"
+          decoding="async"
+        />
+      ) : null}
+      <h3 className="font-display text-base font-semibold">{title}</h3>
       <p className="text-sm text-[var(--muted)]">{description}</p>
       {action}
     </div>
@@ -40,7 +61,7 @@ export function ErrorState({
 }) {
   return (
     <div className="card border-danger/30 p-6" role="alert">
-      <h3 className="text-base font-semibold text-danger">{title}</h3>
+      <h3 className="font-display text-base font-semibold text-danger">{title}</h3>
       <p className="mt-2 text-sm text-[var(--muted)]">{message}</p>
       {onRetry ? (
         <div className="mt-4">
@@ -57,8 +78,13 @@ export function ConfigErrorState({ message, missing }: { message: string; missin
   return (
     <main className="mx-auto flex min-h-dvh max-w-lg flex-col justify-center gap-4 p-6">
       <div className="card p-6">
-        <p className="text-sm font-semibold uppercase tracking-wide text-primary-700">Fundsicles</p>
-        <h1 className="mt-2 text-2xl font-semibold">Configuration required</h1>
+        <div className="flex items-center gap-2">
+          <BrandMark size="sm" />
+          <p className="font-display text-sm font-semibold uppercase tracking-wide text-primary-700">
+            Fundsicles
+          </p>
+        </div>
+        <h1 className="mt-2 font-display text-2xl font-semibold">Configuration required</h1>
         <p className="mt-3 text-[var(--muted)]">{message}</p>
         {missing.length > 0 ? (
           <ul className="mt-4 list-disc space-y-1 pl-5 text-sm">
@@ -90,7 +116,7 @@ export function PageHeader({
   return (
     <header className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+        <h1 className="font-display text-2xl font-semibold tracking-tight">{title}</h1>
         {description ? <p className="mt-1 text-sm text-[var(--muted)]">{description}</p> : null}
       </div>
       {actions}

@@ -1,4 +1,4 @@
-import type { InputHTMLAttributes } from 'react'
+import { forwardRef, type InputHTMLAttributes } from 'react'
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string
@@ -6,7 +6,10 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   hint?: string
 }
 
-export function Input({ label, error, hint, id, className = '', ...rest }: InputProps) {
+export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
+  { label, error, hint, id, className = '', ...rest },
+  ref,
+) {
   const inputId = id ?? rest.name ?? label.replace(/\s+/g, '-').toLowerCase()
   return (
     <div className="w-full">
@@ -14,6 +17,7 @@ export function Input({ label, error, hint, id, className = '', ...rest }: Input
         {label}
       </label>
       <input
+        ref={ref}
         id={inputId}
         className={`input ${error ? 'border-danger' : ''} ${className}`.trim()}
         aria-invalid={error ? true : undefined}
@@ -32,4 +36,4 @@ export function Input({ label, error, hint, id, className = '', ...rest }: Input
       ) : null}
     </div>
   )
-}
+})

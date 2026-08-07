@@ -117,6 +117,7 @@ export function DebtsPage() {
         <EmptyState
           title="No active debts"
           description="Create a liability account first, then link a debt record."
+          illustration="cash-flow"
           action={<Button onClick={() => setOpen(true)}>Add debt</Button>}
         />
       ) : (

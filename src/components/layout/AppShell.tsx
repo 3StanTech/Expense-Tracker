@@ -1,6 +1,7 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/features/auth/AuthProvider'
 import { Button } from '@/components/ui/Button'
+import { BrandMark } from '@/components/brand/BrandMark'
 
 const mainNav = [
   { to: '/app', label: 'Home', end: true, icon: '⌂' },
@@ -50,8 +51,13 @@ export function AppShell() {
         aria-label="Primary"
       >
         <div className="border-b border-[var(--line)] px-4 py-5">
-          <p className="text-lg font-bold text-primary-700">Fundsicles</p>
-          <p className="text-xs text-[var(--muted)]">Your money, made clear.</p>
+          <div className="flex items-center gap-2.5">
+            <BrandMark size="sm" />
+            <div>
+              <p className="font-display text-lg font-bold text-primary-700">Fundsicles</p>
+              <p className="text-xs text-[var(--muted)]">Your money, made clear.</p>
+            </div>
+          </div>
         </div>
         <nav className="flex flex-1 flex-col gap-1 p-3" aria-label="Main">
           {mainNav.map((item) => (
@@ -80,8 +86,9 @@ export function AppShell() {
       {/* Main column */}
       <div className="flex min-w-0 flex-1 flex-col pb-20 md:pb-0">
         <header className="sticky top-0 z-20 flex items-center justify-between border-b border-[var(--line)] bg-[var(--bg)]/95 px-4 py-3 backdrop-blur md:hidden">
-          <div>
-            <p className="text-base font-bold text-primary-700">Fundsicles</p>
+          <div className="flex items-center gap-2">
+            <BrandMark size="sm" />
+            <p className="font-display text-base font-bold text-primary-700">Fundsicles</p>
           </div>
           <NavLink to="/app/settings" className="text-sm font-medium text-[var(--muted)]">
             More

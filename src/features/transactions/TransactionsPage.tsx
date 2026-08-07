@@ -142,6 +142,7 @@ export function TransactionsPage() {
         <EmptyState
           title="No transactions this month"
           description="Add an income, expense, or transfer. Transfers never appear in cash-flow charts."
+          illustration="cash-flow"
           action={<Button onClick={() => setOpen(true)}>Add transaction</Button>}
         />
       ) : (

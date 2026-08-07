@@ -116,6 +116,7 @@ export function BudgetsPage() {
         <EmptyState
           title="No budgets for this month"
           description="Set a limit for an expense category to track progress."
+          illustration="goals"
           action={<Button onClick={() => setOpen(true)}>Add budget</Button>}
         />
       ) : (

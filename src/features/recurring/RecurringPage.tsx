@@ -155,6 +155,7 @@ export function RecurringPage() {
         <EmptyState
           title="No recurring rules"
           description="Automate rent, salary, or subscriptions. Materialize is idempotent."
+          illustration="goals"
           action={<Button onClick={() => setOpen(true)}>Add rule</Button>}
         />
       ) : (

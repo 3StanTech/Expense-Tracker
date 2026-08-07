@@ -139,6 +139,7 @@ export function AccountsPage() {
         <EmptyState
           title="No accounts yet"
           description="Create your first account to start tracking balances."
+          illustration="cash-flow"
           action={<Button onClick={() => setOpen(true)}>Add account</Button>}
         />
       ) : (

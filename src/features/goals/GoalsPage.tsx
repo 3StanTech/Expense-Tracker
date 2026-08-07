@@ -99,6 +99,7 @@ export function GoalsPage() {
         <EmptyState
           title="No savings goals"
           description="Create a goal like Emergency fund or Vacation."
+          illustration="goals"
           action={<Button onClick={() => setOpen(true)}>Add goal</Button>}
         />
       ) : (

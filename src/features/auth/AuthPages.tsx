@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Link, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -13,10 +13,14 @@ import {
 import { useAuth } from './AuthProvider'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { Dialog } from '@/components/ui/Dialog'
 import { getErrorMessage } from '@/lib/errors'
 import { ConfigErrorState } from '@/components/ui/States'
+import { BrandMark } from '@/components/brand/BrandMark'
 import { getEnvStatus } from '@/lib/env'
 import type { z } from 'zod'
+
+const AUTH_TAGLINE = 'Your money, made clear.'
 
 function AuthLayout({
   title,
@@ -28,13 +32,43 @@ function AuthLayout({
   children: React.ReactNode
 }) {
   return (
-    <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-4 py-10">
-      <div className="mb-8 text-center">
-        <p className="text-sm font-semibold uppercase tracking-wide text-primary-700">Fundsicles</p>
-        <h1 className="mt-2 text-2xl font-semibold">{title}</h1>
-        <p className="mt-1 text-sm text-[var(--muted)]">{subtitle}</p>
-      </div>
-      <div className="card p-6">{children}</div>
+    <main className="min-h-dvh lg:grid lg:grid-cols-2">
+      {/* Brand / hero panel — side on desktop, compact header on mobile */}
+      <section
+        className="auth-panel flex flex-col items-center justify-center px-6 py-8 lg:min-h-dvh lg:px-10 lg:py-12"
+        aria-label="Brand"
+      >
+        <div className="flex w-full max-w-md flex-col items-center text-center lg:items-start lg:text-left">
+          <div className="flex items-center gap-2.5">
+            <BrandMark size="md" />
+            <div>
+              <p className="font-display text-lg font-semibold text-primary-700">Fundsicles</p>
+              <p className="text-xs text-[var(--muted)] sm:text-sm">{AUTH_TAGLINE}</p>
+            </div>
+          </div>
+          <img
+            src="/illustrations/auth-hero.webp"
+            alt="Friendly mint piggy bank with abstract coins and soft cash shapes"
+            width={960}
+            height={720}
+            className="mt-6 w-full max-w-xs object-contain sm:max-w-sm lg:mt-10 lg:max-w-md"
+            decoding="async"
+          />
+        </div>
+      </section>
+
+      {/* Form panel */}
+      <section className="flex flex-col justify-center px-4 py-8 sm:px-8 lg:px-12 lg:py-12">
+        <div className="mx-auto w-full max-w-md">
+          <div className="mb-6 text-center lg:text-left">
+            <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
+              {title}
+            </h1>
+            <p className="mt-1 text-sm text-[var(--muted)]">{subtitle}</p>
+          </div>
+          <div className="card p-6">{children}</div>
+        </div>
+      </section>
     </main>
   )
 }
@@ -74,7 +108,7 @@ export function LoginPage() {
   }
 
   return (
-    <AuthLayout title="Welcome back" subtitle="Your money, made clear.">
+    <AuthLayout title="Make your money make sense" subtitle="Sign in to see the full picture.">
       <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)} noValidate>
         <Input
           label="Email"
@@ -118,12 +152,16 @@ export function SignupPage() {
   const { signUp, user, loading, configured, configMessage } = useAuth()
   const navigate = useNavigate()
   const [serverError, setServerError] = useState<string | null>(null)
-  const [info, setInfo] = useState<string | null>(null)
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [submittedEmail, setSubmittedEmail] = useState('')
+  const emailInputRef = useRef<HTMLInputElement | null>(null)
 
   const form = useForm<SignupInput>({
     resolver: zodResolver(signupSchema),
     defaultValues: { email: '', password: '', confirmPassword: '', displayName: '' },
   })
+
+  const { ref: emailRegisterRef, ...emailRegister } = form.register('email')
 
   if (!configured) {
     const status = getEnvStatus()
@@ -139,11 +177,11 @@ export function SignupPage() {
 
   async function onSubmit(values: SignupInput) {
     setServerError(null)
-    setInfo(null)
     try {
       const result = await signUp(values.email, values.password, values.displayName || undefined)
       if (result.needsConfirmation) {
-        setInfo('Check your email to confirm your account, then sign in.')
+        setSubmittedEmail(values.email)
+        setConfirmOpen(true)
       } else {
         navigate('/app', { replace: true })
       }
@@ -152,8 +190,23 @@ export function SignupPage() {
     }
   }
 
+  function handleUseAnotherEmail() {
+    setConfirmOpen(false)
+    // Preserve submitted email in the form field
+    form.setValue('email', submittedEmail, { shouldDirty: true })
+    // Restore focus after dialog unmount restores previous focus first
+    requestAnimationFrame(() => {
+      emailInputRef.current?.focus()
+    })
+  }
+
+  function handleGoToSignIn() {
+    setConfirmOpen(false)
+    navigate('/login')
+  }
+
   return (
-    <AuthLayout title="Create your account" subtitle="Track spending with clarity.">
+    <AuthLayout title="Start your money story" subtitle={AUTH_TAGLINE}>
       <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)} noValidate>
         <Input
           label="Display name"
@@ -166,7 +219,11 @@ export function SignupPage() {
           type="email"
           autoComplete="email"
           error={form.formState.errors.email?.message}
-          {...form.register('email')}
+          {...emailRegister}
+          ref={(el) => {
+            emailRegisterRef(el)
+            emailInputRef.current = el
+          }}
         />
         <Input
           label="Password"
@@ -188,11 +245,6 @@ export function SignupPage() {
             {serverError}
           </p>
         ) : null}
-        {info ? (
-          <p className="text-sm text-primary-800" role="status">
-            {info}
-          </p>
-        ) : null}
         <Button type="submit" fullWidth disabled={form.formState.isSubmitting}>
           {form.formState.isSubmitting ? 'Creating…' : 'Sign up'}
         </Button>
@@ -203,6 +255,31 @@ export function SignupPage() {
           Sign in
         </Link>
       </p>
+
+      <Dialog
+        open={confirmOpen}
+        onClose={handleUseAnotherEmail}
+        title="Check your inbox"
+        footer={
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button type="button" variant="secondary" onClick={handleUseAnotherEmail}>
+              Use another email
+            </Button>
+            <Button type="button" onClick={handleGoToSignIn}>
+              Go to sign in
+            </Button>
+          </div>
+        }
+      >
+        <p className="text-sm text-[var(--muted)]">
+          We sent a message to{' '}
+          <span className="font-semibold text-[var(--fg)]">{submittedEmail}</span>.
+        </p>
+        <p className="mt-3 text-sm text-[var(--muted)]">
+          Click the verification link to activate your account. If you don’t see it, check your spam
+          or junk folder.
+        </p>
+      </Dialog>
     </AuthLayout>
   )
 }
@@ -239,7 +316,7 @@ export function ForgotPasswordPage() {
   }
 
   return (
-    <AuthLayout title="Reset password" subtitle="We’ll email you a secure link.">
+    <AuthLayout title="Let’s get you back in" subtitle="We’ll email you a secure link.">
       <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)} noValidate>
         <Input
           label="Email"
@@ -302,7 +379,7 @@ export function ResetPasswordPage() {
   }
 
   return (
-    <AuthLayout title="Choose a new password" subtitle="Then continue to your dashboard.">
+    <AuthLayout title="Choose a fresh password" subtitle="Then continue to your dashboard.">
       <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)} noValidate>
         <Input
           label="New password"
