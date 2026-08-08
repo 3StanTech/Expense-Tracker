@@ -42,3 +42,6 @@ supabase/.temp
 
 # OS
 Thumbs.db
+
+# Local project context
+/master.md
