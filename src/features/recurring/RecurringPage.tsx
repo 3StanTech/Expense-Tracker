@@ -155,7 +155,6 @@ export function RecurringPage() {
         <EmptyState
           title="No recurring rules"
           description="Automate rent, salary, or subscription transactions."
-          illustration="goals"
           action={<Button onClick={() => setOpen(true)}>Add rule</Button>}
         />
       ) : (

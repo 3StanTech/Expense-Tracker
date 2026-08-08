@@ -10,20 +10,25 @@ describe('EmptyState', () => {
   })
 
   it('renders decorative illustration with empty alt when provided', () => {
-    render(<EmptyState title="No accounts yet" description="Create one" illustration="cash-flow" />)
-    const img = screen.getByRole('presentation', { hidden: true })
-    // img with alt="" is decorative; query via document
+    render(
+      <EmptyState title="No cash flow yet" description="Post activity" illustration="cash-flow" />,
+    )
     const decorative = document.querySelector('img[alt=""]') as HTMLImageElement | null
     expect(decorative).toBeTruthy()
-    expect(decorative?.getAttribute('src')).toContain('empty-cash-flow.webp')
+    expect(decorative?.getAttribute('src')).toContain('empty-cash-flow.png')
     expect(decorative?.getAttribute('alt')).toBe('')
-    expect(img).toBeTruthy()
   })
 
   it('renders goals illustration source', () => {
     render(<EmptyState title="No goals" description="Add a goal" illustration="goals" />)
     const decorative = document.querySelector('img[alt=""]') as HTMLImageElement | null
-    expect(decorative?.getAttribute('src')).toContain('empty-goals.webp')
+    expect(decorative?.getAttribute('src')).toContain('empty-goals.png')
+  })
+
+  it('renders transactions illustration source', () => {
+    render(<EmptyState title="No transactions" description="Add one" illustration="transactions" />)
+    const decorative = document.querySelector('img[alt=""]') as HTMLImageElement | null
+    expect(decorative?.getAttribute('src')).toContain('empty-transactions.png')
   })
 
   it('omits illustration when not provided', () => {

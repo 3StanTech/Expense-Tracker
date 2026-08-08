@@ -47,11 +47,11 @@ function AuthLayout({
             </div>
           </div>
           <img
-            src="/illustrations/auth-hero.webp"
-            alt="Friendly mint piggy bank with abstract coins and soft cash shapes"
-            width={960}
+            src="/illustrations/auth-hero.png"
+            alt="Open wallet with stylized bills and coins on a soft mint cloud"
+            width={1280}
             height={720}
-            className="mt-6 w-full max-w-xs object-contain sm:max-w-sm lg:mt-10 lg:max-w-md"
+            className="mt-6 h-auto w-full max-w-xs object-contain sm:max-w-sm lg:mt-10 lg:max-w-md"
             decoding="async"
           />
         </div>

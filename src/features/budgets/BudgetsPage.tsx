@@ -116,12 +116,23 @@ export function BudgetsPage() {
         <EmptyState
           title="No budgets for this month"
           description="Set a limit for an expense category to track progress."
-          illustration="goals"
           action={<Button onClick={() => setOpen(true)}>Add budget</Button>}
         />
       ) : (
-        <div className="card p-4">
-          <BudgetProgressBars data={rows} />
+        <div className="space-y-4">
+          {totalBudget > 0 &&
+          totalSpent >= 0 &&
+          !isOverspent(totalSpent, totalBudget) &&
+          rows.every((r) => !isOverspent(r.spentMinor, r.budgetMinor)) ? (
+            <EmptyState
+              title="On track this month"
+              description="Every category is within its budget. Keep the good habits going."
+              illustration="budget-celebration"
+            />
+          ) : null}
+          <div className="card p-4">
+            <BudgetProgressBars data={rows} />
+          </div>
         </div>
       )}
 

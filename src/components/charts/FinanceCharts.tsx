@@ -108,12 +108,13 @@ export function IncomeExpenseBars({
 }: {
   data: Array<{ month: string; incomeMinor: number; expenseMinor: number }>
 }) {
-  if (data.length === 0) {
+  const hasCashFlow = data.some((d) => d.incomeMinor > 0 || d.expenseMinor > 0)
+  if (data.length === 0 || !hasCashFlow) {
     return (
       <EmptyState
         title="No cash-flow data yet"
         description="Post income and expense transactions to see the last six months. Transfers are excluded."
-        illustration="goals"
+        illustration="cash-flow"
       />
     )
   }
@@ -187,7 +188,6 @@ export function CategoryDonut({
       <EmptyState
         title="No category spending"
         description="Expense transactions with categories will appear here for the current month."
-        illustration="goals"
       />
     )
   }
@@ -244,7 +244,6 @@ export function NetWorthLine({ data }: { data: Array<{ asOf: string; netWorthMin
       <EmptyState
         title="No net-worth history yet"
         description="Add accounts and posted transactions to build a twelve-month net worth trail."
-        illustration="goals"
       />
     )
   }
@@ -307,7 +306,6 @@ export function BudgetProgressBars({
       <EmptyState
         title="No budgets this month"
         description="Set category budgets to track spending progress."
-        illustration="goals"
       />
     )
   }

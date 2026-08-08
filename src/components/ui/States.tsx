@@ -2,11 +2,51 @@ import type { ReactNode } from 'react'
 import { Button } from './Button'
 import { BrandMark } from '@/components/brand/BrandMark'
 
-export type EmptyIllustration = 'cash-flow' | 'goals'
+export type EmptyIllustration =
+  | 'cash-flow'
+  | 'goals'
+  | 'transactions'
+  | 'budget-celebration'
+  | 'debt-payoff'
 
 const ILLUSTRATION_SRC: Record<EmptyIllustration, string> = {
-  'cash-flow': '/illustrations/empty-cash-flow.webp',
-  goals: '/illustrations/empty-goals.webp',
+  'cash-flow': '/illustrations/empty-cash-flow.png',
+  goals: '/illustrations/empty-goals.png',
+  transactions: '/illustrations/empty-transactions.png',
+  'budget-celebration': '/illustrations/budget-celebration.png',
+  'debt-payoff': '/illustrations/debt-payoff-milestone.png',
+}
+
+/** Intrinsic sizes for layout stability (CLS). */
+const ILLUSTRATION_DIM: Record<
+  EmptyIllustration,
+  { width: number; height: number; className: string }
+> = {
+  'cash-flow': {
+    width: 1280,
+    height: 720,
+    className: 'h-auto w-full max-w-sm object-contain',
+  },
+  goals: {
+    width: 1200,
+    height: 1200,
+    className: 'h-28 w-28 object-contain sm:h-32 sm:w-32',
+  },
+  transactions: {
+    width: 1280,
+    height: 720,
+    className: 'h-auto w-full max-w-sm object-contain',
+  },
+  'budget-celebration': {
+    width: 1200,
+    height: 1200,
+    className: 'h-28 w-28 object-contain sm:h-36 sm:w-36',
+  },
+  'debt-payoff': {
+    width: 1280,
+    height: 720,
+    className: 'h-auto w-full max-w-sm object-contain',
+  },
 }
 
 export function LoadingSkeleton({ rows = 3 }: { rows?: number }) {
@@ -28,18 +68,19 @@ export function EmptyState({
   title: string
   description: string
   action?: ReactNode
-  /** Optional decorative art for sparse empty states. */
+  /** Optional decorative art for sparse empty / completion states. */
   illustration?: EmptyIllustration
 }) {
+  const dim = illustration ? ILLUSTRATION_DIM[illustration] : null
   return (
     <div className="card flex flex-col items-start gap-3 p-6 text-left">
-      {illustration ? (
+      {illustration && dim ? (
         <img
           src={ILLUSTRATION_SRC[illustration]}
           alt=""
-          width={160}
-          height={160}
-          className="h-28 w-28 object-contain sm:h-32 sm:w-32"
+          width={dim.width}
+          height={dim.height}
+          className={dim.className}
           decoding="async"
         />
       ) : null}

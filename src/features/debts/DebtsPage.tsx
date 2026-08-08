@@ -91,6 +91,8 @@ export function DebtsPage() {
   const list = balances.data ?? []
   const total = list.reduce((s, d) => s + d.balanceMinor, 0)
   const due = list.reduce((s, d) => s + d.minimumPaymentMinor, 0)
+  // Only when debts exist and every balance is paid down (empty list is not a payoff).
+  const allPaidOff = list.length > 0 && list.every((d) => d.balanceMinor <= 0)
 
   return (
     <div>
@@ -117,23 +119,31 @@ export function DebtsPage() {
         <EmptyState
           title="No active debts"
           description="Create a liability account first, then link a debt record."
-          illustration="cash-flow"
           action={<Button onClick={() => setOpen(true)}>Add debt</Button>}
         />
       ) : (
-        <ul className="space-y-3">
-          {list.map((d) => (
-            <li key={d.debtId} className="card flex items-center justify-between gap-3 p-4">
-              <div>
-                <p className="font-semibold">{d.name}</p>
-                <p className="text-xs text-[var(--muted)]">
-                  Due day {d.dueDay} · min {formatMoney(d.minimumPaymentMinor)}
-                </p>
-              </div>
-              <MoneyText className="text-lg font-semibold tabular-nums" minor={d.balanceMinor} />
-            </li>
-          ))}
-        </ul>
+        <div className="space-y-4">
+          {allPaidOff ? (
+            <EmptyState
+              title="Debt-free milestone"
+              description="Every tracked debt balance is paid down. Celebrate the win — and keep records for reference."
+              illustration="debt-payoff"
+            />
+          ) : null}
+          <ul className="space-y-3">
+            {list.map((d) => (
+              <li key={d.debtId} className="card flex items-center justify-between gap-3 p-4">
+                <div>
+                  <p className="font-semibold">{d.name}</p>
+                  <p className="text-xs text-[var(--muted)]">
+                    Due day {d.dueDay} · min {formatMoney(d.minimumPaymentMinor)}
+                  </p>
+                </div>
+                <MoneyText className="text-lg font-semibold tabular-nums" minor={d.balanceMinor} />
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
 
       <Dialog
