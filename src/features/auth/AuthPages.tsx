@@ -22,6 +22,10 @@ import type { z } from 'zod'
 
 const AUTH_TAGLINE = 'Your money, made clear.'
 
+/** Mobile: full-bleed edge-to-edge. Desktop: constrained beside the form. */
+export const AUTH_HERO_IMG_CLASS =
+  'auth-hero-illustration mt-6 h-auto w-full max-w-none object-contain object-center lg:mt-10 lg:max-w-md'
+
 function AuthLayout({
   title,
   subtitle,
@@ -32,14 +36,14 @@ function AuthLayout({
   children: React.ReactNode
 }) {
   return (
-    <main className="min-h-dvh lg:grid lg:grid-cols-2">
-      {/* Brand / hero panel — side on desktop, compact header on mobile */}
+    <main className="min-h-dvh overflow-x-hidden lg:grid lg:grid-cols-2">
+      {/* Brand / hero — no horizontal padding on mobile so the image can go edge-to-edge */}
       <section
-        className="auth-panel flex flex-col items-center justify-center px-6 py-8 lg:min-h-dvh lg:px-10 lg:py-12"
+        className="auth-panel flex flex-col items-center justify-center py-8 lg:min-h-dvh lg:px-10 lg:py-12"
         aria-label="Brand"
       >
-        <div className="flex w-full max-w-md flex-col items-center text-center lg:items-start lg:text-left">
-          <div className="flex items-center gap-2.5">
+        <div className="flex w-full flex-col items-center lg:max-w-md lg:items-start">
+          <div className="flex w-full items-center justify-center gap-2.5 px-6 text-center lg:justify-start lg:px-0 lg:text-left">
             <BrandMark size="md" />
             <div>
               <p className="font-display text-lg font-semibold text-primary-700">Fundsicles</p>
@@ -51,7 +55,7 @@ function AuthLayout({
             alt="Open wallet with stylized bills and coins on a soft mint cloud"
             width={1280}
             height={720}
-            className="mt-6 h-auto w-full max-w-xs object-contain sm:max-w-sm lg:mt-10 lg:max-w-md"
+            className={AUTH_HERO_IMG_CLASS}
             decoding="async"
           />
         </div>

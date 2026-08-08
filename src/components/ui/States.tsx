@@ -17,35 +17,38 @@ const ILLUSTRATION_SRC: Record<EmptyIllustration, string> = {
   'debt-payoff': '/illustrations/debt-payoff-milestone.png',
 }
 
+/** Shared presentation so every empty/completion illustration reads at the same visual scale. */
+export const EMPTY_ILLUSTRATION_CLASS = 'h-auto w-full max-w-sm object-contain'
+
 /** Intrinsic sizes for layout stability (CLS). */
-const ILLUSTRATION_DIM: Record<
+export const ILLUSTRATION_DIM: Record<
   EmptyIllustration,
   { width: number; height: number; className: string }
 > = {
   'cash-flow': {
     width: 1280,
     height: 720,
-    className: 'h-auto w-full max-w-sm object-contain',
+    className: EMPTY_ILLUSTRATION_CLASS,
   },
   goals: {
     width: 1200,
     height: 1200,
-    className: 'h-28 w-28 object-contain sm:h-32 sm:w-32',
+    className: EMPTY_ILLUSTRATION_CLASS,
   },
   transactions: {
     width: 1280,
     height: 720,
-    className: 'h-auto w-full max-w-sm object-contain',
+    className: EMPTY_ILLUSTRATION_CLASS,
   },
   'budget-celebration': {
     width: 1200,
     height: 1200,
-    className: 'h-28 w-28 object-contain sm:h-36 sm:w-36',
+    className: EMPTY_ILLUSTRATION_CLASS,
   },
   'debt-payoff': {
     width: 1280,
     height: 720,
-    className: 'h-auto w-full max-w-sm object-contain',
+    className: EMPTY_ILLUSTRATION_CLASS,
   },
 }
 

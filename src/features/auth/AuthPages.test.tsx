@@ -66,6 +66,23 @@ describe('auth page copy', () => {
     expect(screen.getByText('Fundsicles')).toBeInTheDocument()
   })
 
+  it('auth hero is full-bleed width on mobile and constrained on large screens', () => {
+    renderAt('/login')
+    const hero = screen.getByRole('img', {
+      name: /open wallet with stylized bills and coins/i,
+    })
+    expect(hero.getAttribute('src')).toContain('auth-hero.png')
+    // Mobile: edge-to-edge (no max-w-xs/sm cap); desktop: lg:max-w-md
+    expect(hero.className).toContain('w-full')
+    expect(hero.className).toContain('max-w-none')
+    expect(hero.className).toContain('lg:max-w-md')
+    expect(hero.className).not.toMatch(/max-w-xs/)
+    // Brand section has no horizontal padding on mobile so image touches viewport edges
+    const brand = screen.getByRole('region', { name: 'Brand' })
+    expect(brand.className).not.toMatch(/(^|\s)px-6(\s|$)/)
+    expect(brand.className).toContain('lg:px-10')
+  })
+
   it('renders exact signup heading', () => {
     renderAt('/signup')
     expect(screen.getByRole('heading', { name: 'Start your money story' })).toBeInTheDocument()

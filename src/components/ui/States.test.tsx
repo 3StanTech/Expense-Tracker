@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import { EmptyState, MoneyText, ErrorState } from './States'
+import {
+  EmptyState,
+  MoneyText,
+  ErrorState,
+  EMPTY_ILLUSTRATION_CLASS,
+  ILLUSTRATION_DIM,
+} from './States'
 
 describe('EmptyState', () => {
   it('renders title and description', () => {
@@ -23,6 +29,19 @@ describe('EmptyState', () => {
     render(<EmptyState title="No goals" description="Add a goal" illustration="goals" />)
     const decorative = document.querySelector('img[alt=""]') as HTMLImageElement | null
     expect(decorative?.getAttribute('src')).toContain('empty-goals.png')
+  })
+
+  it('sizes goals illustration like cash-flow and transactions empties', () => {
+    expect(ILLUSTRATION_DIM.goals.className).toBe(EMPTY_ILLUSTRATION_CLASS)
+    expect(ILLUSTRATION_DIM.goals.className).toBe(ILLUSTRATION_DIM['cash-flow'].className)
+    expect(ILLUSTRATION_DIM.goals.className).toBe(ILLUSTRATION_DIM.transactions.className)
+
+    render(<EmptyState title="No goals" description="Add a goal" illustration="goals" />)
+    const decorative = document.querySelector('img[alt=""]') as HTMLImageElement | null
+    expect(decorative?.className).toContain('w-full')
+    expect(decorative?.className).toContain('max-w-sm')
+    expect(decorative?.className).not.toMatch(/\bh-28\b/)
+    expect(decorative?.className).not.toMatch(/\bw-28\b/)
   })
 
   it('renders transactions illustration source', () => {
