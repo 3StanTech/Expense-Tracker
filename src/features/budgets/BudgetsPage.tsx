@@ -63,9 +63,15 @@ export function BudgetsPage() {
     )
   }
 
-  if (actuals.error) {
+  if (actuals.error || categories.error) {
     return (
-      <ErrorState message={getErrorMessage(actuals.error)} onRetry={() => void actuals.refetch()} />
+      <ErrorState
+        message={getErrorMessage(actuals.error ?? categories.error)}
+        onRetry={() => {
+          void actuals.refetch()
+          void categories.refetch()
+        }}
+      />
     )
   }
 

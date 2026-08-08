@@ -78,27 +78,90 @@ describe('budgetFormSchema', () => {
 })
 
 describe('debtFormSchema', () => {
-  it('validates due day and interest bps', () => {
+  it('validates due day and interest bps without a principal field', () => {
     const ok = debtFormSchema.safeParse({
       name: 'Card',
       accountId: '11111111-1111-1111-1111-111111111111',
-      principal: '10000',
       interestBps: 1800,
       minimumPayment: '500',
       dueDay: 15,
       notes: '',
     })
     expect(ok.success).toBe(true)
+    if (ok.success) {
+      expect('principal' in ok.data).toBe(false)
+    }
 
     const badDay = debtFormSchema.safeParse({
       name: 'Card',
       accountId: '11111111-1111-1111-1111-111111111111',
-      principal: '10000',
       interestBps: 0,
       minimumPayment: '500',
       dueDay: 32,
       notes: '',
     })
     expect(badDay.success).toBe(false)
+  })
+})
+
+describe('transactionFormSchema kind field compatibility', () => {
+  it('accepts expense after transfer fields are cleared', () => {
+    const r = transactionFormSchema.safeParse({
+      kind: 'expense',
+      status: 'posted',
+      amount: '10.00',
+      occurredOn: '2024-06-01',
+      accountId: '11111111-1111-1111-1111-111111111111',
+      transferAccountId: null,
+      categoryId: '22222222-2222-2222-2222-222222222222',
+      payee: '',
+      notes: '',
+    })
+    expect(r.success).toBe(true)
+  })
+
+  it('rejects expense when a leftover transferAccountId remains', () => {
+    const r = transactionFormSchema.safeParse({
+      kind: 'expense',
+      status: 'posted',
+      amount: '10.00',
+      occurredOn: '2024-06-01',
+      accountId: '11111111-1111-1111-1111-111111111111',
+      transferAccountId: '22222222-2222-2222-2222-222222222222',
+      categoryId: null,
+      payee: '',
+      notes: '',
+    })
+    expect(r.success).toBe(false)
+  })
+
+  it('accepts transfer after category is cleared', () => {
+    const r = transactionFormSchema.safeParse({
+      kind: 'transfer',
+      status: 'posted',
+      amount: '10.00',
+      occurredOn: '2024-06-01',
+      accountId: '11111111-1111-1111-1111-111111111111',
+      transferAccountId: '22222222-2222-2222-2222-222222222222',
+      categoryId: null,
+      payee: '',
+      notes: '',
+    })
+    expect(r.success).toBe(true)
+  })
+
+  it('rejects transfer when a leftover categoryId remains', () => {
+    const r = transactionFormSchema.safeParse({
+      kind: 'transfer',
+      status: 'posted',
+      amount: '10.00',
+      occurredOn: '2024-06-01',
+      accountId: '11111111-1111-1111-1111-111111111111',
+      transferAccountId: '22222222-2222-2222-2222-222222222222',
+      categoryId: '33333333-3333-3333-3333-333333333333',
+      payee: '',
+      notes: '',
+    })
+    expect(r.success).toBe(false)
   })
 })

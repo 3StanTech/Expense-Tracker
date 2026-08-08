@@ -129,6 +129,58 @@ export function currentMonthRange(date: Date = new Date()): { start: string; end
   }
 }
 
+/**
+ * Inclusive start and exclusive end for a YYYY-MM month key using calendar arithmetic only.
+ * Avoids Date/UTC conversion that can drop the last day under Asia/Manila.
+ */
+export function monthDateBounds(month: string): { start: string; endExclusive: string } {
+  if (!/^\d{4}-\d{2}$/.test(month)) {
+    throw new Error(`Invalid month key: ${month}`)
+  }
+  const [yearStr, monthStr] = month.split('-')
+  const year = Number(yearStr)
+  const monthNum = Number(monthStr)
+  if (monthNum < 1 || monthNum > 12) {
+    throw new Error(`Invalid month key: ${month}`)
+  }
+  const start = `${month}-01`
+  const nextMonth = monthNum === 12 ? 1 : monthNum + 1
+  const nextYear = monthNum === 12 ? year + 1 : year
+  const endExclusive = `${String(nextYear).padStart(4, '0')}-${String(nextMonth).padStart(2, '0')}-01`
+  return { start, endExclusive }
+}
+
+/** First occurrence on or after asOf for an active schedule; null if ended. */
+export function nextDueOccurrence(params: {
+  startDate: string
+  endDate: string | null
+  frequency: RecurrenceFrequency
+  interval: number
+  asOf: string
+  lastMaterialized: string | null
+}): string | null {
+  let cursor = parseIsoDate(params.startDate)
+  const asOf = parseIsoDate(params.asOf)
+  const end = params.endDate ? parseIsoDate(params.endDate) : null
+  const lastMaterialized = params.lastMaterialized ? parseIsoDate(params.lastMaterialized) : null
+  let guard = 0
+
+  while (
+    (isBefore(cursor, asOf) || (lastMaterialized !== null && !isAfter(cursor, lastMaterialized))) &&
+    guard < 10_000
+  ) {
+    guard += 1
+    cursor = nextOccurrence(cursor, params.frequency, params.interval)
+  }
+
+  if (isBefore(cursor, asOf) || (lastMaterialized !== null && !isAfter(cursor, lastMaterialized))) {
+    throw new Error('Recurring schedule exceeds the supported occurrence horizon')
+  }
+
+  if (end && isAfter(cursor, end)) return null
+  return format(cursor, 'yyyy-MM-dd')
+}
+
 export function lastNMonths(n: number, date: Date = new Date()): string[] {
   const zoned = nowInManila(date)
   const keys: string[] = []

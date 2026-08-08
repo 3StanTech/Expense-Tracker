@@ -185,7 +185,7 @@ export const contributionFormSchema = z.object({
 export const debtFormSchema = z.object({
   name: nameSchema,
   accountId: uuidSchema,
-  principal: positiveMoneyStringSchema,
+  // Current balance comes from the linked liability account — not a form principal field.
   interestBps: z.coerce
     .number()
     .int('Interest must be whole basis points')

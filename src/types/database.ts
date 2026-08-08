@@ -95,6 +95,7 @@ export interface Database {
           currency: string
           opening_balance_minor: number
           is_archived: boolean
+          archived_at: string | null
           notes: string | null
           created_at: string
           updated_at: string
@@ -107,6 +108,7 @@ export interface Database {
           currency?: string
           opening_balance_minor?: number
           is_archived?: boolean
+          archived_at?: string | null
           notes?: string | null
           created_at?: string
           updated_at?: string
@@ -119,6 +121,7 @@ export interface Database {
           currency?: string
           opening_balance_minor?: number
           is_archived?: boolean
+          archived_at?: string | null
           notes?: string | null
           created_at?: string
           updated_at?: string

@@ -44,7 +44,7 @@ export function DashboardPage() {
   }
 
   const budgetPct = d.budgetTotal > 0 ? Math.round((d.budgetSpent / d.budgetTotal) * 1000) / 10 : 0
-  const upcoming = d.recurring.filter((r) => r.status === 'active').slice(0, 5)
+  const upcoming = d.upcoming
 
   return (
     <div>
@@ -168,7 +168,8 @@ export function DashboardPage() {
                   <div>
                     <p className="font-medium">{r.name}</p>
                     <p className="text-xs text-[var(--muted)]">
-                      {r.frequency} · every {r.intervalCount}
+                      Due {formatDisplayDate(r.nextDueOn, 'MMM d')} · {r.frequency} · every{' '}
+                      {r.intervalCount}
                     </p>
                   </div>
                   <MoneyText minor={r.amountMinor} />

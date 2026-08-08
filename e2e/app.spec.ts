@@ -261,13 +261,12 @@ test.describe('authenticated CRUD flows', () => {
     })
 
     await page.goto('/app/debts')
-    await expect(page.getByRole('heading', { name: 'Debts' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Debts', exact: true })).toBeVisible()
     await clickHeaderAction(page, 'Add debt')
     await page.getByLabel('Name').fill(`E2E ${testInfo.project.name} Debt ${stamp}`)
     await page
       .getByLabel('Liability account')
       .selectOption({ label: `E2E ${testInfo.project.name} Card ${stamp} (credit card)` })
-    await page.getByLabel(/Principal/i).fill('200.00')
     await page.getByLabel(/Minimum payment/i).fill('20.00')
     await page.getByLabel(/Due day of month/i).fill('15')
     await page.getByRole('button', { name: /^save$/i }).click()

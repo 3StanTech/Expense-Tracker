@@ -29,6 +29,7 @@ import type {
 } from '@/types/domain'
 import type { Database } from '@/types/database'
 import { getErrorMessage } from '@/lib/errors'
+import { monthDateBounds } from '@/lib/dates'
 
 async function requireUserId(): Promise<string> {
   const { data, error } = await getSupabase().auth.getUser()
@@ -193,11 +194,9 @@ export async function fetchTransactions(filters?: {
 
   if (filters?.accountId) q = q.eq('account_id', filters.accountId)
   if (filters?.month) {
-    const start = `${filters.month}-01`
-    const [y, m] = filters.month.split('-').map(Number)
-    const endDate = new Date(y!, m!, 0)
-    const end = endDate.toISOString().slice(0, 10)
-    q = q.gte('occurred_on', start).lte('occurred_on', end)
+    // Calendar-string bounds (inclusive start, exclusive next month) — no UTC conversion.
+    const { start, endExclusive } = monthDateBounds(filters.month)
+    q = q.gte('occurred_on', start).lt('occurred_on', endExclusive)
   }
 
   const { data, error } = await q
@@ -517,20 +516,30 @@ export async function fetchDebts(): Promise<Debt[]> {
 export async function createDebt(input: {
   name: string
   accountId: string
-  principalMinor: number
   interestBps: number
   minimumPaymentMinor: number
   dueDay: number
   notes: string | null
 }): Promise<Debt> {
   const uid = await requireUserId()
+  // principal_minor is metadata-only (original snapshot). Current balance is the linked account.
+  const { data: account, error: accountError } = await getSupabase()
+    .from('accounts')
+    .select('opening_balance_minor')
+    .eq('id', input.accountId)
+    .single()
+  throwOnError(accountError, 'Failed to load liability account for debt')
+  const originalPrincipalMinor = Number(
+    requireData(account, 'Liability account not found').opening_balance_minor ?? 0,
+  )
+
   const { data, error } = await getSupabase()
     .from('debts')
     .insert({
       user_id: uid,
       name: input.name,
       account_id: input.accountId,
-      principal_minor: input.principalMinor,
+      principal_minor: originalPrincipalMinor,
       interest_bps: input.interestBps,
       minimum_payment_minor: input.minimumPaymentMinor,
       due_day: input.dueDay,
@@ -546,7 +555,6 @@ export async function updateDebt(
   id: string,
   patch: Partial<{
     name: string
-    principalMinor: number
     interestBps: number
     minimumPaymentMinor: number
     dueDay: number
@@ -556,7 +564,6 @@ export async function updateDebt(
 ): Promise<Debt> {
   const payload: Database['public']['Tables']['debts']['Update'] = {}
   if (patch.name !== undefined) payload.name = patch.name
-  if (patch.principalMinor !== undefined) payload.principal_minor = patch.principalMinor
   if (patch.interestBps !== undefined) payload.interest_bps = patch.interestBps
   if (patch.minimumPaymentMinor !== undefined)
     payload.minimum_payment_minor = patch.minimumPaymentMinor

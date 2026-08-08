@@ -2,10 +2,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { queryKeys } from '@/lib/query-client'
 import { useAuth } from '@/features/auth/AuthProvider'
 import * as repo from './repositories'
-import { monthKey, todayIsoDate } from '@/lib/dates'
-import { computeNetWorth, monthlyCashFlow } from '@/lib/finance'
+import { monthKey, nextDueOccurrence, todayIsoDate } from '@/lib/dates'
+import { computeNetWorth } from '@/lib/finance'
 import { savingsRate } from '@/lib/money'
-import type { Account } from '@/types/domain'
+import type { Account, RecurringRule } from '@/types/domain'
 
 function useEnabled() {
   const { user, configured } = useAuth()
@@ -139,10 +139,32 @@ export function useNetWorthHistory() {
   })
 }
 
+/** Active rules with next due date as of Manila today, soonest first (max 5). */
+export function upcomingRecurringRules(
+  rules: readonly RecurringRule[],
+  asOf: string = todayIsoDate(),
+): Array<RecurringRule & { nextDueOn: string }> {
+  return rules
+    .filter((r) => r.status === 'active')
+    .map((r) => {
+      const nextDueOn = nextDueOccurrence({
+        startDate: r.startDate,
+        endDate: r.endDate,
+        frequency: r.frequency,
+        interval: r.intervalCount,
+        asOf,
+        lastMaterialized: r.lastMaterializedOn,
+      })
+      return nextDueOn ? { ...r, nextDueOn } : null
+    })
+    .filter((r): r is RecurringRule & { nextDueOn: string } => r != null)
+    .sort((a, b) => a.nextDueOn.localeCompare(b.nextDueOn))
+    .slice(0, 5)
+}
+
 export function useDashboardData() {
   const accounts = useAccounts()
   const balances = useAccountBalances()
-  const transactions = useTransactions({ month: monthKey(todayIsoDate()) })
   const cashFlow = useCashFlow()
   const categorySpending = useCategorySpending()
   const budgetActuals = useBudgetActuals(monthKey(todayIsoDate()))
@@ -155,7 +177,6 @@ export function useDashboardData() {
   const isLoading =
     accounts.isLoading ||
     balances.isLoading ||
-    transactions.isLoading ||
     cashFlow.isLoading ||
     categorySpending.isLoading ||
     budgetActuals.isLoading ||
@@ -168,7 +189,6 @@ export function useDashboardData() {
   const error =
     accounts.error ||
     balances.error ||
-    transactions.error ||
     cashFlow.error ||
     categorySpending.error ||
     budgetActuals.error ||
@@ -186,17 +206,21 @@ export function useDashboardData() {
     })) ?? []
 
   const netWorth = computeNetWorth(accountsWithBal)
-  const flow = monthlyCashFlow(transactions.data ?? [])
-  const rate = savingsRate(flow.incomeMinor, flow.expenseMinor)
+  // Complete month aggregates from the view — not the 500-row transaction list.
+  const currentMonth = monthKey(todayIsoDate())
+  const monthFlow = (cashFlow.data ?? []).find((c) => c.month === currentMonth)
+  const income = monthFlow?.incomeMinor ?? 0
+  const expenses = monthFlow?.expenseMinor ?? 0
+  const rate = savingsRate(income, expenses)
   const budgetTotal = (budgetActuals.data ?? []).reduce((s, b) => s + b.budgetMinor, 0)
   const budgetSpent = (budgetActuals.data ?? []).reduce((s, b) => s + b.spentMinor, 0)
   const debtTotal = (debtBalances.data ?? []).reduce((s, d) => s + d.balanceMinor, 0)
   const debtDue = (debtBalances.data ?? []).reduce((s, d) => s + d.minimumPaymentMinor, 0)
+  const upcoming = upcomingRecurringRules(recurring.data ?? [])
 
   function refetchAll() {
     void accounts.refetch()
     void balances.refetch()
-    void transactions.refetch()
     void cashFlow.refetch()
     void categorySpending.refetch()
     void budgetActuals.refetch()
@@ -212,8 +236,8 @@ export function useDashboardData() {
     error,
     refetchAll,
     netWorth,
-    income: flow.incomeMinor,
-    expenses: flow.expenseMinor,
+    income,
+    expenses,
     savingsRate: rate,
     budgetTotal,
     budgetSpent,
@@ -223,6 +247,7 @@ export function useDashboardData() {
     debtDue,
     debtBalances: debtBalances.data ?? [],
     recurring: recurring.data ?? [],
+    upcoming,
     cashFlow: cashFlow.data ?? [],
     categorySpending: categorySpending.data ?? [],
     netWorthHistory: netWorthHistory.data ?? [],
@@ -288,6 +313,20 @@ export function useCreateRecurring() {
   const invalidate = useInvalidateFinance()
   return useMutation({
     mutationFn: repo.createRecurringRule,
+    onSuccess: () => invalidate(),
+  })
+}
+
+export function useUpdateRecurring() {
+  const invalidate = useInvalidateFinance()
+  return useMutation({
+    mutationFn: ({
+      id,
+      patch,
+    }: {
+      id: string
+      patch: Parameters<typeof repo.updateRecurringRule>[1]
+    }) => repo.updateRecurringRule(id, patch),
     onSuccess: () => invalidate(),
   })
 }

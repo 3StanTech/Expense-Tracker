@@ -40,7 +40,6 @@ export function DebtsPage() {
     defaultValues: {
       name: '',
       accountId: '',
-      principal: '',
       interestBps: 0,
       minimumPayment: '',
       dueDay: 1,
@@ -54,7 +53,6 @@ export function DebtsPage() {
       await createDebt.mutateAsync({
         name: values.name,
         accountId: values.accountId,
-        principalMinor: values.principal,
         interestBps: values.interestBps,
         minimumPaymentMinor: values.minimumPayment,
         dueDay: values.dueDay,
@@ -67,7 +65,7 @@ export function DebtsPage() {
     }
   }
 
-  if (debts.isLoading || balances.isLoading) {
+  if (debts.isLoading || balances.isLoading || accounts.isLoading) {
     return (
       <div>
         <PageHeader title="Debts" />
@@ -76,13 +74,14 @@ export function DebtsPage() {
     )
   }
 
-  if (debts.error || balances.error) {
+  if (debts.error || balances.error || accounts.error) {
     return (
       <ErrorState
-        message={getErrorMessage(debts.error ?? balances.error)}
+        message={getErrorMessage(debts.error ?? balances.error ?? accounts.error)}
         onRetry={() => {
           void debts.refetch()
           void balances.refetch()
+          void accounts.refetch()
         }}
       />
     )
@@ -98,7 +97,7 @@ export function DebtsPage() {
     <div>
       <PageHeader
         title="Debts"
-        description="Track liability balances and minimum payments. Link each debt to a liability account."
+        description="Track liability balances and minimum payments. Balance always reflects the linked liability account."
         actions={<Button onClick={() => setOpen(true)}>Add debt</Button>}
       />
 
@@ -118,7 +117,7 @@ export function DebtsPage() {
       {list.length === 0 ? (
         <EmptyState
           title="No active debts"
-          description="Create a liability account first, then link a debt record."
+          description="Create a liability account first, then link a debt record. The account balance is the source of truth."
           action={<Button onClick={() => setOpen(true)}>Add debt</Button>}
         />
       ) : (
@@ -163,7 +162,8 @@ export function DebtsPage() {
       >
         {liabilityAccounts.length === 0 ? (
           <p className="text-sm text-[var(--muted)]">
-            Create a credit card, loan, or liability account under Accounts first.
+            Create a credit card, loan, or liability account under Accounts first. Its balance is
+            the debt balance shown here.
           </p>
         ) : (
           <form id="debt-form" className="space-y-3" onSubmit={form.handleSubmit(onSubmit)}>
@@ -179,12 +179,9 @@ export function DebtsPage() {
               error={form.formState.errors.accountId?.message}
               {...form.register('accountId')}
             />
-            <Input
-              label="Principal"
-              inputMode="decimal"
-              error={form.formState.errors.principal?.message}
-              {...form.register('principal')}
-            />
+            <p className="text-xs text-[var(--muted)]">
+              Current balance is taken from this account, not a separate principal field.
+            </p>
             <Input
               label="Interest (basis points)"
               type="number"

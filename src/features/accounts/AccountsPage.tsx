@@ -97,7 +97,7 @@ export function AccountsPage() {
     }
   }
 
-  if (accounts.isLoading || balances.isLoading) {
+  if (accounts.isLoading || balances.isLoading || categories.isLoading) {
     return (
       <div>
         <PageHeader title="Accounts" />
@@ -106,13 +106,14 @@ export function AccountsPage() {
     )
   }
 
-  if (accounts.error || balances.error) {
+  if (accounts.error || balances.error || categories.error) {
     return (
       <ErrorState
-        message={getErrorMessage(accounts.error ?? balances.error)}
+        message={getErrorMessage(accounts.error ?? balances.error ?? categories.error)}
         onRetry={() => {
           void accounts.refetch()
           void balances.refetch()
+          void categories.refetch()
         }}
       />
     )

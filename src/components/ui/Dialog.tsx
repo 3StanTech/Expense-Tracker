@@ -1,6 +1,26 @@
 import { useEffect, useId, useRef, type ReactNode } from 'react'
 import { Button } from './Button'
 
+const FOCUSABLE_SELECTOR = [
+  'a[href]',
+  'button:not([disabled])',
+  'textarea:not([disabled])',
+  'input:not([disabled])',
+  'select:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])',
+].join(',')
+
+function getFocusable(container: HTMLElement): HTMLElement[] {
+  return Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter((el) => {
+    if (el.hasAttribute('disabled') || el.getAttribute('aria-hidden') === 'true') return false
+    // tabIndex property is -1 for non-tabbable nodes; 0+ means programmatically tabbable.
+    if (el.tabIndex < 0) return false
+    const style = window.getComputedStyle(el)
+    if (style.display === 'none' || style.visibility === 'hidden') return false
+    return true
+  })
+}
+
 interface DialogProps {
   open: boolean
   onClose: () => void
@@ -16,10 +36,38 @@ export function Dialog({ open, onClose, title, children, footer }: DialogProps) 
   useEffect(() => {
     if (!open) return
     const prev = document.activeElement as HTMLElement | null
-    panelRef.current?.focus()
+    const panel = panelRef.current
+    panel?.focus()
+
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') {
+        onClose()
+        return
+      }
+      if (e.key !== 'Tab' || !panel) return
+
+      const focusable = getFocusable(panel)
+      if (focusable.length === 0) {
+        e.preventDefault()
+        panel.focus()
+        return
+      }
+
+      const first = focusable[0]!
+      const last = focusable[focusable.length - 1]!
+      const active = document.activeElement as HTMLElement | null
+
+      if (e.shiftKey) {
+        if (active === first || !panel.contains(active)) {
+          e.preventDefault()
+          last.focus()
+        }
+      } else if (active === last || !panel.contains(active)) {
+        e.preventDefault()
+        first.focus()
+      }
     }
+
     document.addEventListener('keydown', onKey)
     document.body.style.overflow = 'hidden'
     return () => {
@@ -75,6 +123,7 @@ interface ConfirmDialogProps {
   onConfirm: () => void
   onClose: () => void
   loading?: boolean
+  error?: string | null
 }
 
 export function ConfirmDialog({
@@ -85,6 +134,7 @@ export function ConfirmDialog({
   onConfirm,
   onClose,
   loading,
+  error,
 }: ConfirmDialogProps) {
   return (
     <Dialog
@@ -103,6 +153,11 @@ export function ConfirmDialog({
       }
     >
       <p className="text-[var(--muted)]">{message}</p>
+      {error ? (
+        <p className="field-error mt-3" role="alert">
+          {error}
+        </p>
+      ) : null}
     </Dialog>
   )
 }

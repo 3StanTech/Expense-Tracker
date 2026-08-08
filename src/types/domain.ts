@@ -51,6 +51,8 @@ export interface Account {
   currency: CurrencyCode
   openingBalanceMinor: number
   isArchived: boolean
+  /** Set by the database when archived; null while active. */
+  archivedAt: string | null
   notes: string | null
   createdAt: string
   updatedAt: string
@@ -132,7 +134,11 @@ export interface Debt {
   userId: string
   name: string
   accountId: string
-  principalMinor: number
+  /**
+   * Historical original principal snapshot only.
+   * Current balance always comes from the linked liability account (v_debt_balances).
+   */
+  originalPrincipalMinor: number
   interestBps: number
   minimumPaymentMinor: number
   dueDay: number

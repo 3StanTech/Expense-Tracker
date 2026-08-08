@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { recurringFormSchema, type RecurringFormInput } from '@/schemas/forms'
@@ -8,6 +8,7 @@ import {
   useCreateRecurring,
   useMaterializeRecurring,
   useRecurring,
+  useUpdateRecurring,
 } from '@/features/data/hooks'
 import {
   PageHeader,
@@ -23,19 +24,19 @@ import { Textarea } from '@/components/ui/Textarea'
 import { Dialog } from '@/components/ui/Dialog'
 import { todayIsoDate } from '@/lib/dates'
 import { getErrorMessage } from '@/lib/errors'
-import { updateRecurringRule } from '@/features/data/repositories'
-import { useInvalidateFinance } from '@/features/data/hooks'
 
 export function RecurringPage() {
   const rules = useRecurring()
   const accounts = useAccounts()
   const categories = useCategories()
   const createRule = useCreateRecurring()
+  const updateRule = useUpdateRecurring()
   const materialize = useMaterializeRecurring()
-  const invalidate = useInvalidateFinance()
   const [open, setOpen] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
+  const [statusError, setStatusError] = useState<string | null>(null)
   const [info, setInfo] = useState<string | null>(null)
+  const [pendingStatusId, setPendingStatusId] = useState<string | null>(null)
 
   const form = useForm({
     resolver: zodResolver(recurringFormSchema),
@@ -57,6 +58,17 @@ export function RecurringPage() {
   })
 
   const kind = form.watch('kind')
+
+  useEffect(() => {
+    if (kind === 'transfer') {
+      form.setValue('categoryId', null)
+      form.clearErrors('categoryId')
+    } else {
+      form.setValue('transferAccountId', null)
+      form.clearErrors('transferAccountId')
+    }
+  }, [kind, form])
+
   const accountOptions = useMemo(
     () => (accounts.data ?? []).map((a) => ({ value: a.id, label: a.name })),
     [accounts.data],
@@ -95,20 +107,32 @@ export function RecurringPage() {
 
   async function onMaterialize() {
     setInfo(null)
+    setStatusError(null)
     try {
       const n = await materialize.mutateAsync()
       setInfo(`Materialized ${n} transaction${n === 1 ? '' : 's'}.`)
     } catch (e) {
-      setFormError(getErrorMessage(e))
+      setStatusError(getErrorMessage(e))
     }
   }
 
   async function toggleStatus(id: string, status: 'active' | 'paused') {
-    await updateRecurringRule(id, { status: status === 'active' ? 'paused' : 'active' })
-    await invalidate()
+    if (pendingStatusId) return
+    setStatusError(null)
+    setPendingStatusId(id)
+    try {
+      await updateRule.mutateAsync({
+        id,
+        patch: { status: status === 'active' ? 'paused' : 'active' },
+      })
+    } catch (e) {
+      setStatusError(getErrorMessage(e, 'Failed to update recurring status'))
+    } finally {
+      setPendingStatusId(null)
+    }
   }
 
-  if (rules.isLoading) {
+  if (rules.isLoading || accounts.isLoading || categories.isLoading) {
     return (
       <div>
         <PageHeader title="Recurring" />
@@ -117,9 +141,16 @@ export function RecurringPage() {
     )
   }
 
-  if (rules.error) {
+  if (rules.error || accounts.error || categories.error) {
     return (
-      <ErrorState message={getErrorMessage(rules.error)} onRetry={() => void rules.refetch()} />
+      <ErrorState
+        message={getErrorMessage(rules.error ?? accounts.error ?? categories.error)}
+        onRetry={() => {
+          void rules.refetch()
+          void accounts.refetch()
+          void categories.refetch()
+        }}
+      />
     )
   }
 
@@ -143,6 +174,11 @@ export function RecurringPage() {
       {info ? (
         <p className="mb-4 text-sm text-primary-800" role="status">
           {info}
+        </p>
+      ) : null}
+      {statusError ? (
+        <p className="mb-4 field-error" role="alert">
+          {statusError}
         </p>
       ) : null}
       {formError && !open ? (
@@ -173,8 +209,16 @@ export function RecurringPage() {
               </div>
               <div className="flex items-center gap-3">
                 <MoneyText className="font-semibold tabular-nums" minor={r.amountMinor} />
-                <Button variant="secondary" onClick={() => void toggleStatus(r.id, r.status)}>
-                  {r.status === 'active' ? 'Pause' : 'Resume'}
+                <Button
+                  variant="secondary"
+                  disabled={pendingStatusId === r.id || updateRule.isPending}
+                  onClick={() => void toggleStatus(r.id, r.status)}
+                >
+                  {pendingStatusId === r.id
+                    ? 'Updating…'
+                    : r.status === 'active'
+                      ? 'Pause'
+                      : 'Resume'}
                 </Button>
               </div>
             </li>

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { transactionFormSchema, type TransactionFormInput } from '@/schemas/forms'
@@ -34,6 +34,7 @@ export function TransactionsPage() {
   const deleteTx = useDeleteTransaction()
   const [open, setOpen] = useState(false)
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
 
   const form = useForm({
@@ -52,6 +53,17 @@ export function TransactionsPage() {
   })
 
   const kind = form.watch('kind')
+
+  // Clear fields that are hidden for the current kind so they cannot block validation.
+  useEffect(() => {
+    if (kind === 'transfer') {
+      form.setValue('categoryId', null)
+      form.clearErrors('categoryId')
+    } else {
+      form.setValue('transferAccountId', null)
+      form.clearErrors('transferAccountId')
+    }
+  }, [kind, form])
 
   const accountOptions = useMemo(
     () => (accounts.data ?? []).map((a) => ({ value: a.id, label: a.name })),
@@ -115,8 +127,17 @@ export function TransactionsPage() {
     )
   }
 
-  if (txs.error) {
-    return <ErrorState message={getErrorMessage(txs.error)} onRetry={() => void txs.refetch()} />
+  if (txs.error || accounts.error || categories.error) {
+    return (
+      <ErrorState
+        message={getErrorMessage(txs.error ?? accounts.error ?? categories.error)}
+        onRetry={() => {
+          void txs.refetch()
+          void accounts.refetch()
+          void categories.refetch()
+        }}
+      />
+    )
   }
 
   const list = txs.data ?? []
@@ -155,7 +176,10 @@ export function TransactionsPage() {
                 t={t}
                 accountName={accountName}
                 categoryName={categoryName}
-                onDelete={() => setDeleteId(t.id)}
+                onDelete={() => {
+                  setDeleteError(null)
+                  setDeleteId(t.id)
+                }}
               />
             ))}
           </ul>
@@ -195,7 +219,13 @@ export function TransactionsPage() {
                       />
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <Button variant="ghost" onClick={() => setDeleteId(t.id)}>
+                      <Button
+                        variant="ghost"
+                        onClick={() => {
+                          setDeleteError(null)
+                          setDeleteId(t.id)
+                        }}
+                      >
                         Delete
                       </Button>
                     </td>
@@ -299,15 +329,21 @@ export function TransactionsPage() {
         open={Boolean(deleteId)}
         title="Delete transaction?"
         message="This permanently removes the transaction. Account balances will update."
-        onClose={() => setDeleteId(null)}
+        onClose={() => {
+          if (deleteTx.isPending) return
+          setDeleteId(null)
+          setDeleteError(null)
+        }}
         loading={deleteTx.isPending}
+        error={deleteError}
         onConfirm={async () => {
           if (!deleteId) return
+          setDeleteError(null)
           try {
             await deleteTx.mutateAsync(deleteId)
             setDeleteId(null)
-          } catch {
-            /* mutation error surfaces via state if needed */
+          } catch (e) {
+            setDeleteError(getErrorMessage(e, 'Failed to delete transaction'))
           }
         }}
       />
