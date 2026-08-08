@@ -122,7 +122,7 @@ test.describe('authenticated CRUD flows', () => {
   test('accounts create flow', async ({ page }, testInfo) => {
     await signIn(page)
     await page.goto('/app/accounts')
-    await expect(page.getByRole('heading', { name: 'Accounts' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Accounts', exact: true })).toBeVisible()
     await clickHeaderAction(page, 'Add account')
     const stamp = Date.now()
     await page.getByLabel('Name').fill(`E2E ${testInfo.project.name} Cash ${stamp}`)
@@ -137,7 +137,7 @@ test.describe('authenticated CRUD flows', () => {
   test('transactions and transfers create flow', async ({ page }, testInfo) => {
     await signIn(page)
     await page.goto('/app/accounts')
-    await expect(page.getByRole('heading', { name: 'Accounts' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Accounts', exact: true })).toBeVisible()
 
     // Ensure at least two accounts exist for transfer
     const stamp = Date.now()
@@ -154,7 +154,7 @@ test.describe('authenticated CRUD flows', () => {
     }
 
     await page.goto('/app/transactions')
-    await expect(page.getByRole('heading', { name: 'Transactions' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Transactions', exact: true })).toBeVisible()
 
     // Expense
     await clickHeaderAction(page, 'Add transaction')
@@ -193,7 +193,7 @@ test.describe('authenticated CRUD flows', () => {
   test('budgets create flow', async ({ page }, testInfo) => {
     await signIn(page)
     await page.goto('/app/budgets')
-    await expect(page.getByRole('heading', { name: 'Budgets' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Budgets', exact: true })).toBeVisible()
     await clickHeaderAction(page, 'Add budget')
     const category = page.getByLabel('Category')
     const expectedCategory =
