@@ -1,39 +1,111 @@
+import { lazy, Suspense, type ReactNode } from 'react'
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { AppShell } from '@/components/layout/AppShell'
 import { RequireAuth } from '@/features/auth/RequireAuth'
-import {
-  AuthCallbackPage,
-  ForgotPasswordPage,
-  LoginPage,
-  ResetPasswordPage,
-  SignupPage,
-} from '@/features/auth/AuthPages'
-import { DashboardPage } from '@/features/dashboard/DashboardPage'
-import { AccountsPage } from '@/features/accounts/AccountsPage'
-import { TransactionsPage } from '@/features/transactions/TransactionsPage'
-import { BudgetsPage } from '@/features/budgets/BudgetsPage'
-import { RecurringPage } from '@/features/recurring/RecurringPage'
-import { GoalsPage } from '@/features/goals/GoalsPage'
-import { DebtsPage } from '@/features/debts/DebtsPage'
-import { ReportsPage } from '@/features/reports/ReportsPage'
-import { SettingsPage } from '@/features/settings/SettingsPage'
+import { LoadingSkeleton } from '@/components/ui/States'
 import { RouteErrorBoundary } from '@/app/RouteErrorBoundary'
 
-function Protected({ children }: { children: React.ReactNode }) {
+const LoginPage = lazy(() =>
+  import('@/features/auth/AuthPages').then((m) => ({ default: m.LoginPage })),
+)
+const SignupPage = lazy(() =>
+  import('@/features/auth/AuthPages').then((m) => ({ default: m.SignupPage })),
+)
+const ForgotPasswordPage = lazy(() =>
+  import('@/features/auth/AuthPages').then((m) => ({ default: m.ForgotPasswordPage })),
+)
+const ResetPasswordPage = lazy(() =>
+  import('@/features/auth/AuthPages').then((m) => ({ default: m.ResetPasswordPage })),
+)
+const AuthCallbackPage = lazy(() =>
+  import('@/features/auth/AuthPages').then((m) => ({ default: m.AuthCallbackPage })),
+)
+
+const DashboardPage = lazy(() =>
+  import('@/features/dashboard/DashboardPage').then((m) => ({ default: m.DashboardPage })),
+)
+const TransactionsPage = lazy(() =>
+  import('@/features/transactions/TransactionsPage').then((m) => ({
+    default: m.TransactionsPage,
+  })),
+)
+const AccountsPage = lazy(() =>
+  import('@/features/accounts/AccountsPage').then((m) => ({ default: m.AccountsPage })),
+)
+const BudgetsPage = lazy(() =>
+  import('@/features/budgets/BudgetsPage').then((m) => ({ default: m.BudgetsPage })),
+)
+const RecurringPage = lazy(() =>
+  import('@/features/recurring/RecurringPage').then((m) => ({ default: m.RecurringPage })),
+)
+const GoalsPage = lazy(() =>
+  import('@/features/goals/GoalsPage').then((m) => ({ default: m.GoalsPage })),
+)
+const DebtsPage = lazy(() =>
+  import('@/features/debts/DebtsPage').then((m) => ({ default: m.DebtsPage })),
+)
+const ReportsPage = lazy(() =>
+  import('@/features/reports/ReportsPage').then((m) => ({ default: m.ReportsPage })),
+)
+const SettingsPage = lazy(() =>
+  import('@/features/settings/SettingsPage').then((m) => ({ default: m.SettingsPage })),
+)
+
+function Lazy({ children }: { children: ReactNode }) {
+  return <Suspense fallback={<LoadingSkeleton />}>{children}</Suspense>
+}
+
+function Protected({ children }: { children: ReactNode }) {
   return <RequireAuth>{children}</RequireAuth>
 }
 
 export const router = createBrowserRouter([
   { path: '/', element: <Navigate to="/app" replace /> },
-  { path: '/login', element: <LoginPage />, errorElement: <RouteErrorBoundary /> },
-  { path: '/signup', element: <SignupPage />, errorElement: <RouteErrorBoundary /> },
   {
-    path: '/forgot-password',
-    element: <ForgotPasswordPage />,
+    path: '/login',
+    element: (
+      <Lazy>
+        <LoginPage />
+      </Lazy>
+    ),
     errorElement: <RouteErrorBoundary />,
   },
-  { path: '/reset-password', element: <ResetPasswordPage />, errorElement: <RouteErrorBoundary /> },
-  { path: '/auth/callback', element: <AuthCallbackPage />, errorElement: <RouteErrorBoundary /> },
+  {
+    path: '/signup',
+    element: (
+      <Lazy>
+        <SignupPage />
+      </Lazy>
+    ),
+    errorElement: <RouteErrorBoundary />,
+  },
+  {
+    path: '/forgot-password',
+    element: (
+      <Lazy>
+        <ForgotPasswordPage />
+      </Lazy>
+    ),
+    errorElement: <RouteErrorBoundary />,
+  },
+  {
+    path: '/reset-password',
+    element: (
+      <Lazy>
+        <ResetPasswordPage />
+      </Lazy>
+    ),
+    errorElement: <RouteErrorBoundary />,
+  },
+  {
+    path: '/auth/callback',
+    element: (
+      <Lazy>
+        <AuthCallbackPage />
+      </Lazy>
+    ),
+    errorElement: <RouteErrorBoundary />,
+  },
   {
     path: '/app',
     element: (
@@ -43,15 +115,78 @@ export const router = createBrowserRouter([
     ),
     errorElement: <RouteErrorBoundary />,
     children: [
-      { index: true, element: <DashboardPage /> },
-      { path: 'transactions', element: <TransactionsPage /> },
-      { path: 'accounts', element: <AccountsPage /> },
-      { path: 'budgets', element: <BudgetsPage /> },
-      { path: 'recurring', element: <RecurringPage /> },
-      { path: 'goals', element: <GoalsPage /> },
-      { path: 'debts', element: <DebtsPage /> },
-      { path: 'reports', element: <ReportsPage /> },
-      { path: 'settings', element: <SettingsPage /> },
+      {
+        index: true,
+        element: (
+          <Lazy>
+            <DashboardPage />
+          </Lazy>
+        ),
+      },
+      {
+        path: 'transactions',
+        element: (
+          <Lazy>
+            <TransactionsPage />
+          </Lazy>
+        ),
+      },
+      {
+        path: 'accounts',
+        element: (
+          <Lazy>
+            <AccountsPage />
+          </Lazy>
+        ),
+      },
+      {
+        path: 'budgets',
+        element: (
+          <Lazy>
+            <BudgetsPage />
+          </Lazy>
+        ),
+      },
+      {
+        path: 'recurring',
+        element: (
+          <Lazy>
+            <RecurringPage />
+          </Lazy>
+        ),
+      },
+      {
+        path: 'goals',
+        element: (
+          <Lazy>
+            <GoalsPage />
+          </Lazy>
+        ),
+      },
+      {
+        path: 'debts',
+        element: (
+          <Lazy>
+            <DebtsPage />
+          </Lazy>
+        ),
+      },
+      {
+        path: 'reports',
+        element: (
+          <Lazy>
+            <ReportsPage />
+          </Lazy>
+        ),
+      },
+      {
+        path: 'settings',
+        element: (
+          <Lazy>
+            <SettingsPage />
+          </Lazy>
+        ),
+      },
     ],
   },
   { path: '*', element: <Navigate to="/app" replace /> },
