@@ -2,7 +2,7 @@
 
 **Your money, made clear.**
 
-Personal finance SPA for PHP (en-PH, Asia/Manila). Integer minor-unit money storage, Supabase auth + RLS, no bank sync or sample-data fallbacks.
+Personal finance/expense tracker web app. Integer minor-unit money storage, Supabase auth + RLS, no bank sync or sample-data fallbacks.
 
 ## Stack
 
